@@ -1,15 +1,125 @@
 import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
+import Groq from "groq-sdk";
+import { prisma } from "@/lib/prisma";
+import { PROPOSAL_SYSTEM_PROMPT } from "@/lib/prompts";
+
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY! });
 
 export async function POST(req: Request) {
-  const body = await req.json();
+  try {
+    const { userId } = await auth();
 
-  // Mock — sera remplacé par l'appel IA au Jour 4
-  return NextResponse.json({
-    proposal: {
-      id: "mock-id-123",
-      ...body,
-      status: "DRAFT",
-      createdAt: new Date().toISOString(),
-    },
-  });
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Non authentifié" },
+        { status: 401 }
+      );
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { clerkId: userId },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Utilisateur non trouvé" },
+        { status: 404 }
+      );
+    }
+
+    const {
+      title,
+      rawInput,
+      clientName,
+      clientEmail,
+      clientCompany,
+      amount,
+      validUntil,
+    } = await req.json();
+
+    if (!title?.trim() || !rawInput?.trim() || !clientName?.trim() || !clientEmail?.trim() || !amount) {
+      return NextResponse.json(
+        { error: "Champs obligatoires manquants" },
+        { status: 400 }
+      );
+    }
+
+    // Étape 3 — Appel Groq avec structured output
+    const userMessage = `
+Projet: ${title}
+Description: ${rawInput}
+Client: ${clientName} ${clientCompany ? `(${clientCompany})` : ""}
+Email client: ${clientEmail}
+Montant proposé: ${amount}€
+    `.trim();
+
+    const completion = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [
+        { role: "system", content: PROPOSAL_SYSTEM_PROMPT },
+        { role: "user", content: userMessage },
+      ],
+      temperature: 0.4,
+      response_format: { type: "json_object" },
+    });
+
+    const text = completion.choices[0]?.message?.content ?? "";
+    console.log("Réponse brute Groq:", text);
+
+    // Parsing JSON
+    let generated;
+    try {
+      generated = JSON.parse(text);
+    } catch {
+      return NextResponse.json(
+        { error: "La réponse de l'IA n'est pas valide, réessayez." },
+        { status: 500 }
+      );
+    }
+
+    // Étape 4 — Sauvegarder en base
+    const proposal = await prisma.proposal.create({
+      data: {
+        title,
+        rawInput,
+        clientName,
+        clientEmail,
+        clientCompany: clientCompany ?? null,
+        amount: parseFloat(amount),
+        validUntil: validUntil ? new Date(validUntil) : null,
+        context: generated.context,
+        deliverables: generated.deliverables,
+        timeline: generated.timeline,
+        pricing: generated.pricing,
+        conditions: generated.conditions,
+        userId: user.id,
+        // Étape 6 — Créer l'événement CREATED
+        events: {
+          create: {
+            type: "CREATED",
+            metadata: JSON.stringify({ title, clientEmail }),
+          },
+        },
+      },
+    });
+
+    return NextResponse.json({ proposal }, { status: 201 });
+
+  } catch (error) {
+    console.error("Erreur création proposition:", error);
+
+    // Étape 8 — Gestion des erreurs
+    if (error instanceof Error && error.message.includes("429")) {
+      return NextResponse.json(
+        { error: "Trop de requêtes, réessayez dans quelques secondes." },
+        { status: 429 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: "Erreur lors de la génération, réessayez." },
+      { status: 500 }
+    );
+  }
 }

@@ -61,9 +61,8 @@ export default function ProposalForm() {
         setError(data.error ?? "Une erreur est survenue.");
         return;
       }
-
-      //router.push(`/proposals/${data.proposal.id}`);
-      router.push(`/dashboard`);
+      router.push(`/proposals/${data.proposal.id}`);
+      
     } catch (error) {
       setError("Erreur réseau, vérifiez votre connexion.");
       console.error("Erreur:", error);

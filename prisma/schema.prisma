@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../app/generated/prisma"
 }
 
@@ -18,7 +18,7 @@ model User {
 }
 
 model Proposal {
-  id            String         @id @default(cuid())
+  id            String          @id @default(cuid())
   title         String
   rawInput      String
   clientName    String
@@ -30,17 +30,17 @@ model Proposal {
   pricing       String
   conditions    String
   amount        Float
-  currency      String         @default("EUR")
-  status        ProposalStatus @default(DRAFT)
-  publicToken   String         @unique @default(cuid())
+  currency      String          @default("EUR")
+  status        ProposalStatus  @default(DRAFT)
+  publicToken   String          @unique @default(cuid())
   signedAt      DateTime?
   signatureData String?
   signedIp      String?
   validUntil    DateTime?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
   userId        String
-  user          User           @relation(fields: [userId], references: [id])
+  user          User            @relation(fields: [userId], references: [id])
   events        ProposalEvent[]
 }
 

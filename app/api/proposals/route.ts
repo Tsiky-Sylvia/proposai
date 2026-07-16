@@ -122,4 +122,101 @@ Montant proposé: ${amount}€
       { status: 500 }
     );
   }
+  
+}
+
+export async function GET() {
+  try {
+    const { userId } = await auth();
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Non authentifié" },
+        { status: 401 }
+      );
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { clerkId: userId },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Utilisateur non trouvé" },
+        { status: 404 }
+      );
+    }
+
+    const proposals = await prisma.proposal.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        title: true,
+        clientName: true,
+        clientEmail: true,
+        clientCompany: true,
+        amount: true,
+        currency: true,
+        status: true,
+        validUntil: true,
+        createdAt: true,
+      },
+    });
+
+    return NextResponse.json({ proposals });
+  } catch (error) {
+    console.error("Erreur récupération propositions:", error);
+    return NextResponse.json(
+      { error: "Erreur lors de la récupération" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { userId } = await auth();
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Non authentifié" },
+        { status: 401 }
+      );
+    }
+
+    const { id } = await params;
+
+    const user = await prisma.user.findUnique({
+      where: { clerkId: userId },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Utilisateur non trouvé" },
+        { status: 404 }
+      );
+    }
+
+    // Supprimer d'abord les événements liés
+    await prisma.proposalEvent.deleteMany({
+      where: { proposalId: id },
+    });
+
+    // Puis supprimer la proposition
+    await prisma.proposal.delete({
+      where: { id, userId: user.id },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Erreur suppression proposition:", error);
+    return NextResponse.json(
+      { error: "Erreur lors de la suppression" },
+      { status: 500 }
+    );
+  }
 }

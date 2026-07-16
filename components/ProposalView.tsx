@@ -1,0 +1,170 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+type ProposalEvent = {
+  id: string;
+  type: string;
+  createdAt: string;
+};
+
+type Proposal = {
+  id: string;
+  title: string;
+  clientName: string;
+  clientEmail: string;
+  clientCompany: string | null;
+  amount: number;
+  currency: string;
+  status: string;
+  validUntil: string | null;
+  context: string;
+  deliverables: string;
+  timeline: string;
+  pricing: string;
+  conditions: string;
+  createdAt: string;
+  events: ProposalEvent[];
+};
+
+const statusConfig: Record<string, { label: string; color: string }> = {
+  DRAFT: { label: "Brouillon", color: "bg-gray-100 text-gray-600" },
+  SENT: { label: "Envoyée", color: "bg-blue-100 text-blue-600" },
+  VIEWED: { label: "Consultée", color: "bg-yellow-100 text-yellow-600" },
+  ACCEPTED: { label: "Acceptée", color: "bg-green-100 text-green-600" },
+  DECLINED: { label: "Refusée", color: "bg-red-100 text-red-600" },
+  EXPIRED: { label: "Expirée", color: "bg-orange-100 text-orange-600" },
+};
+
+function Section({ title, content }: { title: string; content: string }) {
+  return (
+    <div className="flex flex-col gap-3">
+      <h3 className="text-lg font-semibold text-gray-800 border-b border-gray-100 pb-2">
+        {title}
+      </h3>
+      <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line">
+        {content}
+      </p>
+    </div>
+  );
+}
+
+export default function ProposalView({ id }: { id: string }) {
+  const [proposal, setProposal] = useState<Proposal | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProposal = async () => {
+      try {
+        const response = await fetch(`/api/proposals/${id}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          setError(data.error ?? "Erreur lors du chargement.");
+          return;
+        }
+
+        setProposal(data.proposal);
+      } catch (error) {
+        setError("Erreur réseau, vérifiez votre connexion.");
+        console.error("Erreur:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProposal();
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-40 gap-3 text-gray-400">
+        <div className="w-5 h-5 border-2 border-gray-200 border-t-blue-500 rounded-full animate-spin" />
+        <span className="text-sm">Chargement de la proposition...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+        ⚠️ {error}
+      </div>
+    );
+  }
+
+  if (!proposal) return null;
+
+  const status = statusConfig[proposal.status];
+
+  return (
+    <div className="flex flex-col gap-6">
+      {/* Header */}
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">{proposal.title}</h1>
+          <p className="text-sm text-gray-400 mt-1">
+            Créée le {new Date(proposal.createdAt).toLocaleDateString("fr-FR")}
+          </p>
+        </div>
+        <span className={`text-sm px-3 py-1 rounded-full font-medium ${status.color}`}>
+          {status.label}
+        </span>
+      </div>
+
+      {/* Infos client + montant */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col gap-2">
+          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+            Client
+          </h3>
+          <p className="font-semibold text-gray-800">{proposal.clientName}</p>
+          {proposal.clientCompany && (
+            <p className="text-sm text-gray-500">{proposal.clientCompany}</p>
+          )}
+          <p className="text-sm text-gray-500">{proposal.clientEmail}</p>
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col gap-2">
+          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+            Montant
+          </h3>
+          <p className="text-3xl font-bold text-blue-600">
+            {proposal.amount.toLocaleString("fr-FR")} {proposal.currency}
+          </p>
+          {proposal.validUntil && (
+            <p className="text-sm text-gray-500">
+              Valide jusqu'au{" "}
+              {new Date(proposal.validUntil).toLocaleDateString("fr-FR")}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Contenu généré par l'IA */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-6">
+        <Section title="📋 Contexte du projet" content={proposal.context} />
+        <Section title="📦 Livrables" content={proposal.deliverables} />
+        <Section title="🗓 Planning" content={proposal.timeline} />
+        <Section title="💰 Tarification" content={proposal.pricing} />
+        <Section title="📜 Conditions générales" content={proposal.conditions} />
+      </div>
+
+      {/* Actions */}
+      <div className="flex gap-3 justify-end">
+        <button
+          onClick={() => alert("Export PDF — disponible bientôt")}
+          className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"
+        >
+          📄 Exporter en PDF
+        </button>
+        <button
+          onClick={() => alert("Envoi au client — disponible bientôt")}
+          className="px-6 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
+        >
+          📤 Envoyer au client
+        </button>
+      </div>
+    </div>
+  );
+}

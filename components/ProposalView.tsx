@@ -17,6 +17,7 @@ type Proposal = {
   amount: number;
   currency: string;
   status: string;
+  publicToken: string;
   validUntil: string | null;
   context: string;
   deliverables: string;
@@ -53,6 +54,8 @@ export default function ProposalView({ id }: { id: string }) {
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const fetchProposal = async () => {
@@ -172,12 +175,37 @@ export default function ProposalView({ id }: { id: string }) {
           📄 Exporter en PDF
         </button>
 
-        <button
-          onClick={() => alert("Envoi au client — disponible bientôt")}
-          className="px-6 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
-        >
-          📤 Envoyer au client
-        </button>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-xl">
+            <span className="text-xs text-gray-500 flex-1 truncate">
+              {`${window.location.origin}/p/${proposal.publicToken}`}
+            </span>
+            <button
+              onClick={async () => {
+                await navigator.clipboard.writeText(
+                  `${window.location.origin}/p/${proposal.publicToken}`
+                );
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              }}
+              className="text-xs text-blue-600 hover:text-blue-800 font-medium shrink-0 transition-colors"
+            >
+              {copied ? "✅ Copié !" : "📋 Copier"}
+            </button>
+          </div>
+          <button
+            onClick={async () => {
+              await navigator.clipboard.writeText(
+                `${window.location.origin}/p/${proposal.publicToken}`
+              );
+              setCopied(true);
+              setTimeout(() => setCopied(false), 2000);
+            }}
+            className="px-6 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
+          >
+            📤 Envoyer au client
+          </button>
+        </div>
       </div>
     </div>
   );

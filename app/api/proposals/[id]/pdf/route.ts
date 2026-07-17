@@ -4,7 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { DocumentProps, renderToBuffer } from "@react-pdf/renderer";
 import ProposalPDF from "@/components/ProposalPDF";
 import { createElement, ReactElement } from "react";
-import React from "react";
 
 export async function GET(
   req: Request,

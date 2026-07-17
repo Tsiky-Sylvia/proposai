@@ -1,6 +1,7 @@
 "use client"; 
 
 import { useEffect, useState } from "react";
+import SignatureForm from "./SignatureForm";
 
 type Proposal = {
     id: string;
@@ -22,6 +23,8 @@ type Proposal = {
     signatureData: string | null;
 }
 
+
+
 function Section ({ title, content } : { title: string; content: string }){
     return(
         <div className="flex felx-col gap-3">
@@ -40,6 +43,7 @@ export default function PublicProposalView({ token }: { token: string }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+
   useEffect(() => {
     const fetchProposal = async () => {
       try {
@@ -50,8 +54,8 @@ export default function PublicProposalView({ token }: { token: string }) {
           setError(data.error ?? "Erreur lors du chargement.");
           return;
         }
-
         setProposal(data.proposal);
+
       } catch (error) {
         setError("Erreur réseau, vérifiez votre connexion.");
         console.error("Erreur:", error);
@@ -62,6 +66,25 @@ export default function PublicProposalView({ token }: { token: string }) {
 
     fetchProposal();
   }, [token]);
+
+  
+  const [signatureData, setSignatureData] = useState<{
+    name: string;
+    signedAt: string;
+  } | null>(
+    proposal?.signedAt
+      ? { name: proposal.signatureData ?? "", signedAt: proposal.signedAt }
+      : null
+  );
+
+  useEffect(() => {
+    if (proposal?.signedAt && proposal?.signatureData) {
+      setSignatureData({
+        name: proposal.signatureData,
+        signedAt: proposal.signedAt,
+      });
+    }
+  }, [proposal]);
 
   if (isLoading) {
     return (
@@ -138,24 +161,52 @@ export default function PublicProposalView({ token }: { token: string }) {
       </div>
 
       {/* Zone signature — sera complétée au Jour 9 */}
-      {proposal.status === "ACCEPTED" ? (
-        <div className="bg-green-50 border border-green-200 rounded-2xl p-6 text-center">
-          <span className="text-3xl">✅</span>
-          <p className="font-semibold text-green-700 mt-2">
-            Proposition acceptée par {proposal.signatureData}
-          </p>
-          <p className="text-sm text-green-600 mt-1">
-            Signée le{" "}
-            {proposal.signedAt
-              ? new Date(proposal.signedAt).toLocaleDateString("fr-FR")
-              : ""}
-          </p>
-        </div>
-      ) : (
-        <div className="bg-white border border-gray-100 rounded-2xl p-6 text-center text-gray-400">
-          <p className="text-sm">Zone de signature — disponible bientôt</p>
-        </div>
-      )}
+      {proposal.status === "ACCEPTED" || signatureData ? (
+      <div className="bg-green-50 border border-green-200 rounded-2xl p-6 text-center flex flex-col gap-2">
+        <span className="text-4xl">✅</span>
+        <p className="font-semibold text-green-700 text-lg">
+          Proposition acceptée
+        </p>
+        <p className="text-sm text-green-600">
+          Signée par{" "}
+          <span className="font-semibold">
+            {signatureData?.name ?? proposal.signatureData}
+          </span>
+        </p>
+        <p className="text-xs text-green-500">
+          Le{" "}
+          {new Date(
+            signatureData?.signedAt ?? proposal.signedAt ?? ""
+          ).toLocaleDateString("fr-FR")}{" "}
+          à{" "}
+          {new Date(
+            signatureData?.signedAt ?? proposal.signedAt ?? ""
+          ).toLocaleTimeString("fr-FR")}
+        </p>
+      </div>
+    ) : proposal.status === "EXPIRED" ? (
+      <div className="bg-orange-50 border border-orange-200 rounded-2xl p-6 text-center">
+        <span className="text-4xl">⏰</span>
+        <p className="font-semibold text-orange-700 mt-2">
+          Cette proposition a expiré
+        </p>
+      </div>
+    ) : proposal.status === "DECLINED" ? (
+      <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center">
+        <span className="text-4xl">❌</span>
+        <p className="font-semibold text-red-700 mt-2">
+          Proposition refusée
+        </p>
+      </div>
+    ) : (
+      <SignatureForm
+        token={token}
+        clientName={proposal.clientName}
+        amount={proposal.amount}
+        currency={proposal.currency}
+        onSigned={(name, signedAt) => setSignatureData({ name, signedAt })}
+      />
+    )}
 
       {/* Footer */}
       <p className="text-center text-xs text-gray-400 pb-4">

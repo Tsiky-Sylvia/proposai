@@ -153,11 +153,25 @@ export default function ProposalView({ id }: { id: string }) {
       {/* Actions */}
       <div className="flex gap-3 justify-end">
         <button
-          onClick={() => alert("Export PDF — disponible bientôt")}
+          onClick={async () => {
+            const response = await fetch(`/api/proposals/${proposal.id}/pdf`);
+            if (!response.ok) {
+              alert("Erreur lors de la génération du PDF.");
+              return;
+            }
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `proposition-${proposal.id}.pdf`;
+            a.click();
+            URL.revokeObjectURL(url);
+          }}
           className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"
         >
           📄 Exporter en PDF
         </button>
+
         <button
           onClick={() => alert("Envoi au client — disponible bientôt")}
           className="px-6 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"

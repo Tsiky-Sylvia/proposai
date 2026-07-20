@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { sendSignatureNotificationEmail } from "@/lib/email";
 
 export async function POST(
   req: Request,
@@ -88,6 +89,31 @@ export async function POST(
         },
       },
     });
+
+    // Après le prisma.proposal.update, ajoute:
+    // Récupérer les infos du freelance pour la notification
+    const freelance = await prisma.user.findUnique({
+      where: { id: proposal.userId },
+    });
+
+    if (freelance) {
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+      
+      await sendSignatureNotificationEmail({
+        freelanceEmail: freelance.email,
+        freelanceName: freelance.name ?? freelance.email,
+        clientName: proposal.clientName.trim(),
+        proposalTitle: proposal.title,
+        amount: proposal.amount,
+        currency: proposal.currency,
+        signedAt: proposal.signedAt?.toISOString() ?? '',
+        proposalUrl: `${baseUrl}/proposals/${proposal.id}`,
+      }).catch((err) => {
+        // On ne bloque pas la signature si l'email échoue
+        console.error("Erreur envoi notification:", err);
+      });
+    }
+
 
     return NextResponse.json({ signedAt: signedAt.toISOString() });
   } catch (error) {

@@ -23,7 +23,7 @@ export async function sendProposalEmail({
   validUntil?: string | null;
 }) {
   return resend.emails.send({
-    from: "ProposAI <onboarding@resend.dev>",
+    from: "onboarding@resend.dev",
     to: clientEmail,
     subject: `Proposition commerciale: ${proposalTitle}`,
     html: `
@@ -123,7 +123,7 @@ export async function sendSignatureNotificationEmail({
   proposalUrl: string;
 }) {
   return resend.emails.send({
-    from: "ProposAI <onboarding@resend.dev>",
+    from: "onboarding@resend.dev",
     to: freelanceEmail,
     subject: `🎉 ${clientName} a accepté votre proposition !`,
     html: `

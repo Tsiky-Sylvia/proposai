@@ -164,7 +164,21 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json({ proposals });
+    // Calculer les stats côté serveur
+    const stats = {
+      total: proposals.length,
+      totalAmount: proposals.reduce((sum, p) => sum + p.amount, 0),
+      accepted: proposals.filter((p) => p.status === "ACCEPTED").length,
+      pending: proposals.filter((p) =>
+        ["DRAFT", "SENT", "VIEWED"].includes(p.status)
+      ).length,
+      declined: proposals.filter((p) => p.status === "DECLINED").length,
+      acceptedAmount: proposals
+        .filter((p) => p.status === "ACCEPTED")
+        .reduce((sum, p) => sum + p.amount, 0),
+    };
+
+    return NextResponse.json({ proposals, stats });
   } catch (error) {
     console.error("Erreur récupération propositions:", error);
     return NextResponse.json(

@@ -57,6 +57,12 @@ export default function ProposalView({ id }: { id: string }) {
 
   const [copied, setCopied] = useState(false);
 
+  // Ajoute ces states en haut du composant
+  const [isSending, setIsSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+
+
   useEffect(() => {
     const fetchProposal = async () => {
       try {
@@ -100,6 +106,33 @@ export default function ProposalView({ id }: { id: string }) {
   if (!proposal) return null;
 
   const status = statusConfig[proposal.status];
+
+  const handleSend = async () => {
+    if (!proposal) return;
+    setIsSending(true);
+    setSendError(null);
+
+    try {
+      const response = await fetch(`/api/proposals/${proposal.id}/send`, {
+        method: "POST",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setSendError(data.error ?? "Erreur lors de l'envoi.");
+        return;
+      }
+
+      setSent(true);
+      setProposal((prev) => prev ? { ...prev, status: "SENT" } : prev);
+    } catch (error) {
+      setSendError("Erreur réseau, vérifiez votre connexion.");
+      console.error("Erreur:", error);
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -176,35 +209,51 @@ export default function ProposalView({ id }: { id: string }) {
         </button>
 
         <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-xl">
-            <span className="text-xs text-gray-500 flex-1 truncate">
-              {`${window.location.origin}/p/${proposal.publicToken}`}
-            </span>
+          <div className="flex flex-col gap-3">
+            {sendError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+                ⚠️ {sendError}
+              </div>
+            )}
+            {sent && (
+              <div className="p-3 bg-green-50 border border-green-200 rounded-xl text-green-600 text-sm">
+                ✅ Email envoyé à {proposal.clientEmail}
+              </div>
+            )}
+            <div className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-xl">
+              <span className="text-xs text-gray-500 flex-1 truncate">
+                {`${window.location.origin}/p/${proposal.publicToken}`}
+              </span>
+              <button
+                onClick={async () => {
+                  await navigator.clipboard.writeText(
+                    `${window.location.origin}/p/${proposal.publicToken}`
+                  );
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                }}
+                className="text-xs text-blue-600 hover:text-blue-800 font-medium shrink-0 transition-colors"
+              >
+                {copied ? "✅ Copié !" : "📋 Copier"}
+              </button>
+            </div>
             <button
-              onClick={async () => {
-                await navigator.clipboard.writeText(
-                  `${window.location.origin}/p/${proposal.publicToken}`
-                );
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
-              }}
-              className="text-xs text-blue-600 hover:text-blue-800 font-medium shrink-0 transition-colors"
+              onClick={handleSend}
+              disabled={isSending || sent || proposal.status === "ACCEPTED"}
+              className="px-6 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
             >
-              {copied ? "✅ Copié !" : "📋 Copier"}
+              {isSending ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Envoi en cours...
+                </>
+              ) : sent ? (
+                "✅ Envoyé"
+              ) : (
+                "📤 Envoyer au client"
+              )}
             </button>
           </div>
-          <button
-            onClick={async () => {
-              await navigator.clipboard.writeText(
-                `${window.location.origin}/p/${proposal.publicToken}`
-              );
-              setCopied(true);
-              setTimeout(() => setCopied(false), 2000);
-            }}
-            className="px-6 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
-          >
-            📤 Envoyer au client
-          </button>
         </div>
       </div>
     </div>

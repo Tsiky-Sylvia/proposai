@@ -47,11 +47,11 @@ export async function POST(req: Request) {
 
     // Étape 3 — Appel Groq avec structured output
     const userMessage = `
-Projet: ${title}
-Description: ${rawInput}
-Client: ${clientName} ${clientCompany ? `(${clientCompany})` : ""}
-Email client: ${clientEmail}
-Montant proposé: ${amount}€
+      Projet: ${title}
+      Description: ${rawInput}
+      Client: ${clientName} ${clientCompany ? `(${clientCompany})` : ""}
+      Email client: ${clientEmail}
+      Montant proposé: ${amount}€
     `.trim();
 
     const completion = await groq.chat.completions.create({
@@ -161,6 +161,7 @@ export async function GET() {
         status: true,
         validUntil: true,
         createdAt: true,
+        updatedAt: true,
       },
     });
 

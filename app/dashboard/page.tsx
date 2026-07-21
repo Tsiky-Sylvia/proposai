@@ -17,6 +17,7 @@ type Proposal = {
   status: string;
   validUntil: string | null;
   createdAt: string;
+  updatedAt: string;
 };
 
 type Stats = {

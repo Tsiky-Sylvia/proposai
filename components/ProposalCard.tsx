@@ -11,6 +11,13 @@ type Proposal = {
   status: string;
   validUntil: string | null;
   createdAt: string;
+  updatedAt: string;
+};
+
+const isRecentlyUpdated = (updatedAt: string) => {
+  const diff = Date.now() - new Date(updatedAt).getTime();
+  console.log("Difference date: ", diff);
+  return diff < 24 * 60 * 60 * 1000; // moins de 24h
 };
 
 const statusConfig: Record<string, { label: string; color: string }> = {
@@ -43,9 +50,17 @@ export default function ProposalCard({ proposal, onDelete }: ProposalCardProps) 
             {proposal.clientCompany ? ` — ${proposal.clientCompany}` : ""}
           </p>
         </div>
-        <span className={`text-xs px-3 py-1 rounded-full font-medium shrink-0 ${status.color}`}>
-          {status.label}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className={`text-xs px-3 py-1 rounded-full font-medium shrink-0 ${status.color}`}>
+            {status.label}
+          </span>
+          {["VIEWED", "ACCEPTED", "DECLINED"].includes(proposal.status) &&
+            isRecentlyUpdated(proposal.updatedAt) && (
+              <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-blue-600 text-white animate-pulse">
+                Nouveau
+              </span>
+            )}
+        </div>
       </div>
 
       {/* Montant + date */}

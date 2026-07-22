@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import ProposalTimeline from "@/components/ProposalTimeline";
-import type { ProposalEvent, Proposal } from "@/lib/type";
+import type { Proposal } from "@/lib/type";
+import { useRouter } from "next/navigation";
 
 const statusConfig: Record<string, { label: string; color: string }> = {
   DRAFT: { label: "Brouillon", color: "bg-gray-100 text-gray-600" },
@@ -38,7 +39,7 @@ export default function ProposalView({ id }: { id: string }) {
   const [sent, setSent] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
 
-
+  const router = useRouter();
   useEffect(() => {
     const fetchProposal = async () => {
       try {
@@ -64,24 +65,24 @@ export default function ProposalView({ id }: { id: string }) {
   }, [id]);
 
   // Rafraîchissement automatique si statut en attente
-useEffect(() => {
-  if (!proposal) return;
-  if (["ACCEPTED", "DECLINED", "EXPIRED", "DRAFT"].includes(proposal.status)) return;
+  useEffect(() => {
+    if (!proposal) return;
+    if (["ACCEPTED", "DECLINED", "EXPIRED", "DRAFT"].includes(proposal.status)) return;
 
-  const interval = setInterval(async () => {
-    try {
-      const response = await fetch(`/api/proposals/${id}`);
-      const data = await response.json();
-      if (response.ok) {
-        setProposal(data.proposal);
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/proposals/${id}`);
+        const data = await response.json();
+        if (response.ok) {
+          setProposal(data.proposal);
+        }
+      } catch (error) {
+        console.error("Erreur rafraîchissement:", error);
       }
-    } catch (error) {
-      console.error("Erreur rafraîchissement:", error);
-    }
-  }, 30000); // 30 secondes
+    }, 30000); // 30 secondes
 
-  return () => clearInterval(interval);
-}, [proposal?.status, id]);
+    return () => clearInterval(interval);
+  }, [proposal?.status, id]);
 
   if (isLoading) {
     return (
@@ -129,6 +130,20 @@ useEffect(() => {
     } finally {
       setIsSending(false);
     }
+  };
+
+  const handleRenew = () => {
+    if (!proposal) return;
+    
+    const params = new URLSearchParams({
+      title: proposal.title,
+      clientName: proposal.clientName,
+      clientEmail: proposal.clientEmail,
+      clientCompany: proposal.clientCompany ?? "",
+      amount: proposal.amount.toString(),
+      rawInput: proposal.rawInput ?? "",
+    });
+    router.push(`/proposals/new?${params.toString()}`);
   };
 
   return (
@@ -215,6 +230,14 @@ useEffect(() => {
           >
             📄 Exporter en PDF
           </button>
+          {["DECLINED", "EXPIRED"].includes(proposal.status) && (
+            <button
+              onClick={handleRenew}
+              className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-sm font-medium hover:bg-blue-100 transition-colors"
+            >
+              🔄 Renouveler la proposition
+            </button>
+          )}
 
           <div className="flex flex-col gap-2">
             <div className="flex flex-col gap-3">

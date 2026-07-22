@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import SignatureForm from "./SignatureForm";
+import DeclineForm from "@/components/DeclineForm";
+import RenewRequestForm from "@/components/RenewRequestForm";
 
 type Proposal = {
     id: string;
@@ -42,6 +44,8 @@ export default function PublicProposalView({ token }: { token: string }) {
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [declined, setDeclined] = useState(false);
+  const [renewRequested, setRenewRequested] = useState(false);
 
 
   useEffect(() => {
@@ -160,53 +164,100 @@ export default function PublicProposalView({ token }: { token: string }) {
         <Section title="📜 Conditions générales" content={proposal.conditions} />
       </div>
 
-      {/* Zone signature — sera complétée au Jour 9 */}
+      {/* Zone signature*/}
       {proposal.status === "ACCEPTED" || signatureData ? (
-      <div className="bg-green-50 border border-green-200 rounded-2xl p-6 text-center flex flex-col gap-2">
-        <span className="text-4xl">✅</span>
-        <p className="font-semibold text-green-700 text-lg">
-          Proposition acceptée
-        </p>
-        <p className="text-sm text-green-600">
-          Signée par{" "}
-          <span className="font-semibold">
-            {signatureData?.name ?? proposal.signatureData}
-          </span>
-        </p>
-        <p className="text-xs text-green-500">
-          Le{" "}
-          {new Date(
-            signatureData?.signedAt ?? proposal.signedAt ?? ""
-          ).toLocaleDateString("fr-FR")}{" "}
-          à{" "}
-          {new Date(
-            signatureData?.signedAt ?? proposal.signedAt ?? ""
-          ).toLocaleTimeString("fr-FR")}
-        </p>
-      </div>
-    ) : proposal.status === "EXPIRED" ? (
-      <div className="bg-orange-50 border border-orange-200 rounded-2xl p-6 text-center">
-        <span className="text-4xl">⏰</span>
-        <p className="font-semibold text-orange-700 mt-2">
-          Cette proposition a expiré
-        </p>
-      </div>
-    ) : proposal.status === "DECLINED" ? (
-      <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center">
-        <span className="text-4xl">❌</span>
-        <p className="font-semibold text-red-700 mt-2">
-          Proposition refusée
-        </p>
-      </div>
-    ) : (
-      <SignatureForm
-        token={token}
-        clientName={proposal.clientName}
-        amount={proposal.amount}
-        currency={proposal.currency}
-        onSigned={(name, signedAt) => setSignatureData({ name, signedAt })}
-      />
-    )}
+        <div className="bg-green-50 border border-green-200 rounded-2xl p-6 text-center flex flex-col gap-2">
+          <span className="text-4xl">✅</span>
+          <p className="font-semibold text-green-700 text-lg">
+            Proposition acceptée
+          </p>
+          <p className="text-sm text-green-600">
+            Signée par{" "}
+            <span className="font-semibold">
+              {signatureData?.name ?? proposal.signatureData}
+            </span>
+          </p>
+          <p className="text-xs text-green-500">
+            Le{" "}
+            {new Date(
+              signatureData?.signedAt ?? proposal.signedAt ?? ""
+            ).toLocaleDateString("fr-FR")}{" "}
+            à{" "}
+            {new Date(
+              signatureData?.signedAt ?? proposal.signedAt ?? ""
+            ).toLocaleTimeString("fr-FR")}
+          </p>
+        </div>
+      ) : proposal.status === "DECLINED" || declined ? (
+        <div className="flex flex-col gap-4">
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center flex flex-col gap-2">
+            <span className="text-4xl">❌</span>
+            <p className="font-semibold text-red-700">Proposition refusée</p>
+            <p className="text-sm text-red-500">
+              Vous avez refusé cette proposition.
+            </p>
+          </div>
+          {renewRequested ? (
+            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6 text-center">
+              <span className="text-3xl">🔄</span>
+              <p className="font-semibold text-blue-700 mt-2">
+                Demande envoyée !
+              </p>
+              <p className="text-sm text-blue-500 mt-1">
+                Le prestataire va vous recontacter avec une nouvelle proposition.
+              </p>
+            </div>
+          ) : (
+            <RenewRequestForm
+              token={token}
+              clientName={proposal.clientName}
+              onRequested={() => setRenewRequested(true)}
+            />
+          )}
+        </div>
+      ) : proposal.status === "EXPIRED" ? (
+        <div className="flex flex-col gap-4">
+          <div className="bg-orange-50 border border-orange-200 rounded-2xl p-6 text-center flex flex-col gap-2">
+            <span className="text-4xl">⏰</span>
+            <p className="font-semibold text-orange-700">
+              Cette proposition a expiré
+            </p>
+          </div>
+          {renewRequested ? (
+            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6 text-center">
+              <span className="text-3xl">🔄</span>
+              <p className="font-semibold text-blue-700 mt-2">
+                Demande envoyée !
+              </p>
+              <p className="text-sm text-blue-500 mt-1">
+                Le prestataire va vous recontacter avec une nouvelle proposition.
+              </p>
+            </div>
+          ) : (
+            <RenewRequestForm
+              token={token}
+              clientName={proposal.clientName}
+              onRequested={() => setRenewRequested(true)}
+            />
+          )}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4">
+          <SignatureForm
+            token={token}
+            clientName={proposal.clientName}
+            amount={proposal.amount}
+            currency={proposal.currency}
+            onSigned={(name, signedAt) => setSignatureData({ name, signedAt })}
+          />
+          <div className="text-center">
+            <DeclineForm
+              token={token}
+              onDeclined={() => setDeclined(true)}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <p className="text-center text-xs text-gray-400 pb-4">

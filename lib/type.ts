@@ -25,5 +25,6 @@ export type Proposal = {
   updatedAt: string;
   signedAt: string | null;
   signatureData: string | null;
+  rawInput: string;
   events: ProposalEvent[];
 };

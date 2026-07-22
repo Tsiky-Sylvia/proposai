@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 type FormData = {
   title: string;
@@ -17,13 +18,15 @@ export default function ProposalForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const searchParams = useSearchParams();
   const [form, setForm] = useState<FormData>({
-    title: "",
-    rawInput: "",
-    clientName: "",
-    clientEmail: "",
-    clientCompany: "",
-    amount: "",
+    title: searchParams.get("title") ?? "",
+    rawInput: searchParams.get("rawInput") ?? "",
+    clientName: searchParams.get("clientName") ?? "",
+    clientEmail: searchParams.get("clientEmail") ?? "",
+    clientCompany: searchParams.get("clientCompany") ?? "",
+    amount: searchParams.get("amount") ?? "",
     validUntil: "",
   });
 

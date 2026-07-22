@@ -189,3 +189,167 @@ export async function sendSignatureNotificationEmail({
     `,
   });
 }
+
+export async function sendDeclineNotificationEmail({
+  freelanceEmail,
+  freelanceName,
+  clientName,
+  proposalTitle,
+  reason,
+  proposalUrl,
+}: {
+  freelanceEmail: string;
+  freelanceName: string;
+  clientName: string;
+  proposalTitle: string;
+  reason: string | null;
+  proposalUrl: string;
+}) {
+  return resend.emails.send({
+    from: "ProposAI <onboarding@resend.dev>",
+    to: freelanceEmail,
+    subject: `❌ ${clientName} a refusé votre proposition`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+        </head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background-color: #f9fafb; margin: 0; padding: 40px 20px;">
+          <div style="max-width: 560px; margin: 0 auto; background: white; border-radius: 16px; padding: 40px; border: 1px solid #e5e7eb;">
+            
+            <div style="text-align: center; margin-bottom: 32px;">
+              <span style="font-size: 48px;">😔</span>
+              <h1 style="font-size: 22px; font-weight: 700; color: #1f2937; margin: 12px 0 0;">
+                Proposition refusée
+              </h1>
+            </div>
+
+            <p style="color: #374151; font-size: 15px; line-height: 1.6; margin: 0 0 16px;">
+              Bonjour <strong>${freelanceName}</strong>,
+            </p>
+            <p style="color: #374151; font-size: 15px; line-height: 1.6; margin: 0 0 24px;">
+              <strong>${clientName}</strong> a refusé votre proposition commerciale.
+            </p>
+
+            <div style="background: #fef2f2; border-radius: 12px; padding: 20px; margin-bottom: 24px; border: 1px solid #fecaca;">
+              <p style="color: #991b1b; font-size: 12px; text-transform: uppercase; font-weight: 600; margin: 0 0 6px;">
+                Proposition refusée
+              </p>
+              <p style="color: #1f2937; font-size: 17px; font-weight: 700; margin: 0 0 12px;">
+                ${proposalTitle}
+              </p>
+              ${
+                reason
+                  ? `<p style="color: #6b7280; font-size: 13px; margin: 0;">
+                <strong>Motif:</strong> ${reason}
+              </p>`
+                  : `<p style="color: #9ca3af; font-size: 13px; margin: 0; font-style: italic;">
+                Aucun motif fourni
+              </p>`
+              }
+            </div>
+
+            <div style="text-align: center; margin-bottom: 32px;">
+              
+                href="${proposalUrl}"
+                style="display: inline-block; background-color: #6b7280; color: white; text-decoration: none; padding: 14px 32px; border-radius: 12px; font-size: 15px; font-weight: 600;"
+              >
+                Voir la proposition →
+              </a>
+            </div>
+
+            <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; text-align: center;">
+              <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+                ProposAI — Ne vous découragez pas, chaque refus est une opportunité d'amélioration.
+              </p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+  });
+}
+
+export async function sendRenewRequestEmail({
+  freelanceEmail,
+  freelanceName,
+  clientName,
+  proposalTitle,
+  message,
+  proposalUrl,
+}: {
+  freelanceEmail: string;
+  freelanceName: string;
+  clientName: string;
+  proposalTitle: string;
+  message: string | null;
+  proposalUrl: string;
+}) {
+  return resend.emails.send({
+    from: "ProposAI <onboarding@resend.dev>",
+    to: freelanceEmail,
+    subject: `🔄 ${clientName} demande une nouvelle proposition`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+        </head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background-color: #f9fafb; margin: 0; padding: 40px 20px;">
+          <div style="max-width: 560px; margin: 0 auto; background: white; border-radius: 16px; padding: 40px; border: 1px solid #e5e7eb;">
+            
+            <div style="text-align: center; margin-bottom: 32px;">
+              <span style="font-size: 48px;">🔄</span>
+              <h1 style="font-size: 22px; font-weight: 700; color: #1f2937; margin: 12px 0 0;">
+                Demande de renouvellement
+              </h1>
+            </div>
+
+            <p style="color: #374151; font-size: 15px; line-height: 1.6; margin: 0 0 16px;">
+              Bonjour <strong>${freelanceName}</strong>,
+            </p>
+            <p style="color: #374151; font-size: 15px; line-height: 1.6; margin: 0 0 24px;">
+              <strong>${clientName}</strong> souhaite recevoir une nouvelle proposition pour le projet suivant.
+            </p>
+
+            <div style="background: #eff6ff; border-radius: 12px; padding: 20px; margin-bottom: 24px; border: 1px solid #bfdbfe;">
+              <p style="color: #1e40af; font-size: 12px; text-transform: uppercase; font-weight: 600; margin: 0 0 6px;">
+                Proposition concernée
+              </p>
+              <p style="color: #1f2937; font-size: 17px; font-weight: 700; margin: 0 0 12px;">
+                ${proposalTitle}
+              </p>
+              ${
+                message
+                  ? `<p style="color: #374151; font-size: 13px; margin: 0;">
+                <strong>Message du client:</strong> ${message}
+              </p>`
+                  : `<p style="color: #9ca3af; font-size: 13px; margin: 0; font-style: italic;">
+                Aucun message fourni
+              </p>`
+              }
+            </div>
+
+            <div style="text-align: center; margin-bottom: 32px;">
+              
+                href="${proposalUrl}"
+                style="display: inline-block; background-color: #2563eb; color: white; text-decoration: none; padding: 14px 32px; border-radius: 12px; font-size: 15px; font-weight: 600;"
+              >
+                Voir la proposition et renouveler →
+              </a>
+            </div>
+
+            <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; text-align: center;">
+              <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+                ProposAI — Une nouvelle opportunité de conclure !
+              </p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+  });
+}

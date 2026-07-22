@@ -210,7 +210,7 @@ export default function ProposalView({ id }: { id: string }) {
         )}
 
         {/* Actions */}
-        <div className="flex gap-3 justify-end">
+        <div className="flex justify-end flex-col gap-3 md:flex-row md:justify-between md:items-center">
           <button
             onClick={async () => {
               const response = await fetch(`/api/proposals/${proposal.id}/pdf`);

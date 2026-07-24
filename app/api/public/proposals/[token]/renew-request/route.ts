@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendRenewRequestEmail } from "@/lib/email";
+import { handlePrismaError } from "@/lib/prisma-error";
 
 export async function POST(
   req: Request,
@@ -44,9 +45,12 @@ export async function POST(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Erreur demande renouvellement:", error);
+    const prismaError = handlePrismaError(error);
+    if (prismaError) return prismaError;
+    
+    console.error("Erreur:", error);
     return NextResponse.json(
-      { error: "Erreur lors de la demande." },
+      { error: "Erreur interne du serveur." },
       { status: 500 }
     );
   }

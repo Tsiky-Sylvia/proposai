@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { handlePrismaError } from "@/lib/prisma-error";
 
 export async function GET(
   req: Request,
@@ -84,9 +85,12 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("Erreur récupération proposition publique:", error);
+    const prismaError = handlePrismaError(error);
+    if (prismaError) return prismaError;
+    
+    console.error("Erreur:", error);
     return NextResponse.json(
-      { error: "Erreur lors de la récupération." },
+      { error: "Erreur interne du serveur." },
       { status: 500 }
     );
   }

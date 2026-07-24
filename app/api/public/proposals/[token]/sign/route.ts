@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendSignatureNotificationEmail } from "@/lib/email";
+import { handlePrismaError } from "@/lib/prisma-error";
 
 export async function POST(
   req: Request,
@@ -117,9 +118,12 @@ export async function POST(
 
     return NextResponse.json({ signedAt: signedAt.toISOString() });
   } catch (error) {
-    console.error("Erreur signature:", error);
+    const prismaError = handlePrismaError(error);
+    if (prismaError) return prismaError;
+    
+    console.error("Erreur:", error);
     return NextResponse.json(
-      { error: "Erreur lors de la signature." },
+      { error: "Erreur interne du serveur." },
       { status: 500 }
     );
   }

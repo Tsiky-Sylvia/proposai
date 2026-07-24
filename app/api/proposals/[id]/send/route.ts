@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { sendProposalEmail } from "@/lib/email";
+import { handlePrismaError } from "@/lib/prisma-error";
 
 export async function POST(
   req: Request,
@@ -84,9 +85,12 @@ export async function POST(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Erreur envoi proposition:", error);
+    const prismaError = handlePrismaError(error);
+    if (prismaError) return prismaError;
+    
+    console.error("Erreur:", error);
     return NextResponse.json(
-      { error: "Erreur lors de l'envoi." },
+      { error: "Erreur interne du serveur." },
       { status: 500 }
     );
   }

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import ProposalTimeline from "@/components/ProposalTimeline";
 import type { Proposal } from "@/lib/type";
 import { useRouter } from "next/navigation";
+import EditableSection from "@/components/EditableSection";
 
 const statusConfig: Record<string, { label: string; color: string }> = {
   DRAFT: { label: "Brouillon", color: "bg-gray-100 text-gray-600" },
@@ -196,13 +197,66 @@ export default function ProposalView({ id }: { id: string }) {
           </div>
         </div>
 
-        {/* Contenu généré par l'IA */}
+        {/* Contenu généré par l'IA — éditable */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-6">
-          <Section title="📋 Contexte du projet" content={proposal.context} />
-          <Section title="📦 Livrables" content={proposal.deliverables} />
-          <Section title="🗓 Planning" content={proposal.timeline} />
-          <Section title="💰 Tarification" content={proposal.pricing} />
-          <Section title="📜 Conditions générales" content={proposal.conditions} />
+          {proposal.status == "DRAFT" && (
+            <div className="flex items-center gap-2 text-xs text-gray-400">
+              <span>✨</span>
+              <span>Contenu généré par l'IA — cliquez sur "Modifier" pour éditer une section. </span>
+            </div>
+          )}
+          
+
+          <EditableSection
+            title="📋 Contexte du projet"
+            content={proposal.context}
+            fieldName="context"
+            proposalId={proposal.id}
+            editable={proposal.status === "DRAFT"}
+            onSaved={(field, value) =>
+              setProposal((prev) => prev ? { ...prev, [field]: value } : prev)
+            }
+          />
+          <EditableSection
+            title="📦 Livrables"
+            content={proposal.deliverables}
+            fieldName="deliverables"
+            proposalId={proposal.id}
+            editable={proposal.status === "DRAFT"}
+            onSaved={(field, value) =>
+              setProposal((prev) => prev ? { ...prev, [field]: value } : prev)
+            }
+          />
+          <EditableSection
+            title="🗓 Planning"
+            content={proposal.timeline}
+            fieldName="timeline"
+            proposalId={proposal.id}
+            editable={proposal.status === "DRAFT"}
+            onSaved={(field, value) =>
+              setProposal((prev) => prev ? { ...prev, [field]: value } : prev)
+            }
+          />
+          <EditableSection
+            title="💰 Tarification"
+            content={proposal.pricing}
+            fieldName="pricing"
+            proposalId={proposal.id}
+            editable={proposal.status === "DRAFT"}
+            onSaved={(field, value) =>
+              setProposal((prev) => prev ? { ...prev, [field]: value } : prev)
+            }
+          />
+          <EditableSection
+            title="📜 Conditions générales"
+            content={proposal.conditions}
+            fieldName="conditions"
+            proposalId={proposal.id}
+            editable={proposal.status === "DRAFT"}
+            onSaved={(field, value) =>
+              setProposal((prev) => prev ? { ...prev, [field]: value } : prev)
+            }
+          />
         </div>
 
         {proposal.events && proposal.events.length > 0 && (

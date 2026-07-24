@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import Groq from "groq-sdk";
 import { prisma } from "@/lib/prisma";
 import { PROPOSAL_SYSTEM_PROMPT } from "@/lib/prompts";
+import { handlePrismaError } from "@/lib/prisma-error";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY! });
 
@@ -181,9 +182,12 @@ export async function GET() {
 
     return NextResponse.json({ proposals, stats });
   } catch (error) {
-    console.error("Erreur récupération propositions:", error);
+    const prismaError = handlePrismaError(error);
+    if (prismaError) return prismaError;
+    
+    console.error("Erreur:", error);
     return NextResponse.json(
-      { error: "Erreur lors de la récupération" },
+      { error: "Erreur interne du serveur." },
       { status: 500 }
     );
   }
@@ -228,9 +232,12 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Erreur suppression proposition:", error);
+    const prismaError = handlePrismaError(error);
+    if (prismaError) return prismaError;
+    
+    console.error("Erreur:", error);
     return NextResponse.json(
-      { error: "Erreur lors de la suppression" },
+      { error: "Erreur interne du serveur." },
       { status: 500 }
     );
   }

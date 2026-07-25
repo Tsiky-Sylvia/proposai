@@ -1,6 +1,16 @@
 import ProposalForm from "@/components/ProposalForm";
 import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
+import { Suspense } from "react";
+
+function LoadingForm() {
+  return (
+    <div className="flex items-center justify-center h-40 gap-3 text-gray-400">
+      <div className="w-5 h-5 border-2 border-gray-200 border-t-blue-500 rounded-full animate-spin" />
+      <span className="text-sm">Chargement...</span>
+    </div>
+  );
+}
 
 export default function NewProposalPage() {
   return (
@@ -34,7 +44,9 @@ export default function NewProposalPage() {
             Décris ton projet, l'IA génère une proposition professionnelle en 30 secondes.
           </p>
         </div>
-        <ProposalForm />
+        <Suspense fallback={<LoadingForm />}>
+          <ProposalForm />
+        </Suspense>
       </div>
     </main>
   );
